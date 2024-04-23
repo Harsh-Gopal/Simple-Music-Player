@@ -1,0 +1,37 @@
+import numpy as np
+from scipy.optimize import minimize
+
+# Expected returns for each asset
+expected_returns = np.array([0.05, 0.07, 0.03])
+
+# Risk (standard deviation) for each asset
+risks = np.array([0.1, 0.15, 0.08])
+
+# Initial guess for asset allocations
+x0 = np.array([0.3, 0.2, 0.5])  # Initial guess
+
+# Constraints
+constraints = ({'type': 'ineq', 'fun': lambda x: 1000000 - np.sum(x)},  # Total investment should not exceed $1,000,000
+               {'type': 'ineq', 'fun': lambda x: x[0] - 300000},          # Investment in Asset X should be at least $300,000
+               {'type': 'ineq', 'fun': lambda x: x[1] - 200000},          # Investment in Asset Y should be at least $200,000
+               {'type': 'ineq', 'fun': lambda x: x[2] - 100000},          # Investment in Asset Z should be at least $100,000
+               {'type': 'ineq', 'fun': lambda x: 600000 - x[0]},          # Investment in Asset X should not exceed $600,000
+               {'type': 'ineq', 'fun': lambda x: 400000 - x[1]},          # Investment in Asset Y should not exceed $400,000
+               {'type': 'ineq', 'fun': lambda x: 300000 - x[2]})          # Investment in Asset Z should not exceed $300,000
+
+# Objective function: maximize expected return
+def objective(x):
+    return -np.sum(expected_returns * x)  # Negative sign because we want to maximize
+
+# Solve the optimization problem
+result = minimize(objective, x0, constraints=constraints)
+
+# Extract optimal asset allocations
+optimal_allocations = result.x
+print(f"Optimal allocations: Asset X: {optimal_allocations[0]*1000000:.2f}, Asset Y: {optimal_allocations[1]*1000000:.2f}, Asset Z: {optimal_allocations[2]*1000000:.2f}")
+
+# Calculate expected return and risk of the optimal portfolio
+expected_return = -result.fun
+risk = np.sqrt(np.dot(optimal_allocations, np.dot(np.diag(risks), optimal_allocations)))
+print(f"Expected return: {expected_return:.4f}")
+print(f"Risk: {risk:.4f}")
